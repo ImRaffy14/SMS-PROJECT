@@ -168,7 +168,7 @@ const discounts = [
 export default function FeeCustomization() {
   const [isAddFeeOpen, setIsAddFeeOpen] = useState(false)
   const [isViewFeeOpen, setIsViewFeeOpen] = useState(false)
-  const [isEditFeeOpen, setIsEditFeeOpen] = useState(false)
+  // const [isEditFeeOpen, setIsEditFeeOpen] = useState(false)
   const [isAddDiscountOpen, setIsAddDiscountOpen] = useState(false)
   const [isViewDiscountOpen, setIsViewDiscountOpen] = useState(false)
   const [isEditDiscountOpen, setIsEditDiscountOpen] = useState(false)
@@ -261,7 +261,7 @@ export default function FeeCustomization() {
       installments: fee.installments,
       discountEligible: fee.discountEligible,
     })
-    setIsEditFeeOpen(true)
+    // setIsEditFeeOpen(true)
   }
 
   const openViewDiscountModal = (discount: any) => {
