@@ -11,8 +11,6 @@ export const useCreateAccount = () => {
     onSuccess: (response) => {
       const { user } = response;
       
-      queryClient.setQueryData(['currentUser'], user);
-      
       queryClient.setQueryData(['users'], (oldUsers: User[] | undefined) => 
         oldUsers ? [user, ...oldUsers] : [user]
       );
@@ -29,7 +27,6 @@ export const useCreateAccount = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
     }
   });
 };

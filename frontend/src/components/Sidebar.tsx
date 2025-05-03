@@ -13,26 +13,36 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from '@/components/ui/button';
 import { logout } from "@/api/auth";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/authContext";
 
 function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const menuItems = [
+  // Split menu items based on role requirements
+  const baseMenuItems = [
     { id: "dashboard", path: "/", icon: <BarChart3 size={20} />, label: "Dashboard" },
     { id: "communication", path: "/communication", icon: <EthernetPort size={20} />, label: "Communication" },
     { id: "mobileapp", path: "/mobileApp", icon: <TabletSmartphone size={20} />, label: "Mobile Application" },
-    { id: "feeCustomization", path: "/feeCustomization", icon: <Columns3 size={20} />, label: "Few Customizations" },
+    { id: "feeCustomization", path: "/feeCustomization", icon: <Columns3 size={20} />, label: "Fee Customizations" },
     { id: "smsInteg", path: "/smsInteg", icon: <Blocks size={20} />, label: "SMS Data" },
+  ];
+
+  const adminMenuItems = [
     { id: "users", path: "/users", icon: <Users size={20} />, label: "Users" },
   ];
 
-  const navigate = useNavigate()
+  const menuItems = [
+    ...baseMenuItems,
+    ...(user?.role?.includes("ADMIN") ? adminMenuItems : []),
+  ];
 
   const handleLogout = async () => {
-    const result = await logout()
-    toast.success(result.message)
-    navigate('/login')
-  }
+    const result = await logout();
+    toast.success(result.message);
+    navigate('/login');
+  };
 
   return (
     <div className={`bg-white border-r ${collapsed ? "w-16" : "w-64"} flex flex-col transition-all duration-300`}>
@@ -71,7 +81,7 @@ function Sidebar() {
       <div className="p-4 border-t">
         <button 
           className={`flex items-center ${collapsed ? "justify-center" : "justify-start"} w-full text-red-600 hover:bg-red-50 px-3 py-2 rounded-md`}
-          onClick={() => handleLogout()}
+          onClick={handleLogout}
         >
           <LogOut size={20} />
           {!collapsed && <span className="ml-3 font-medium">Logout</span>}

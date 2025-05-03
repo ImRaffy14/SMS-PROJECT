@@ -29,11 +29,6 @@ export interface User {
     updatedAt: string;
 }
 
-export interface UsersResponse {
-    status: 'success';
-    data: User[];
-}
-
 export interface ErrorResponse {
     error: string;
     errors?: Record<string, string[]>;
@@ -52,3 +47,15 @@ export type PaginationControlsProps = {
     previousLabel?: string;
     nextLabel?: string;
 };
+
+export interface ConfirmationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    title?: string;
+    description?: string;
+    itemName?: string;
+    isLoading?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+}

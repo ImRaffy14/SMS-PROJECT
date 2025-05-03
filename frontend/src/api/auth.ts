@@ -36,7 +36,7 @@ export const createAccount = async (userData: FormData)  => {
         const axiosError = error as AxiosError<ErrorResponse>
 
         if(axiosError.response){
-            throw new Error(axiosError.response?.data.error)
+            throw new Error(axiosError.response.data.error)
         }
         else if (axiosError.request) {
             throw new Error('Network error - no response from server');

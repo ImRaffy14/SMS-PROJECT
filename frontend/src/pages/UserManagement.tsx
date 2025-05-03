@@ -22,16 +22,20 @@ import { useQuery } from "@tanstack/react-query"
 import { getUsers } from "../api/accounts"
 import type { User } from "../types"
 import { useCreateAccount } from "@/hooks/auth/useCreateAccount"
+import { useEditUser, useEditUserPassword, useDeleteUser } from "@/hooks/useUserManagement"
 import type { NewUser } from "@/types"
 import { base64ToFile } from "@/lib/fileUtils"
 import PaginationControls from "@/components/PaginationControls"
 import { processItems } from "@/lib/data-utils"
 import FullPageLoader from "@/components/FullpageLoader"
+import toast from "react-hot-toast"
+import { ConfirmationModal } from "@/components/ConfirmationModal"
 
 const UserManagement = () => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
   const [isViewUserOpen, setIsViewUserOpen] = useState(false)
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
@@ -113,7 +117,9 @@ const UserManagement = () => {
     })
   }
 
-  const handleEditUser = () => {
+  const { mutate, isPending: isUpdating } = useEditUser();
+
+  const handleEditUser = async () => {
     if (!selectedUser) return
 
     const avatarFile = croppedImage ? base64ToFile(croppedImage, "profile.png") : null
@@ -121,20 +127,74 @@ const UserManagement = () => {
     const formData = new FormData()
     if (avatarFile) {
       formData.append("image", avatarFile)
+      formData.append('imageUrl', selectedUser.image.imageUrl)
+      formData.append('imagePublicId', selectedUser.image.publicId)
     }
 
     Object.entries(editUser).forEach(([key, value]) => {
       formData.append(key, value)
     })
+
+    mutate({ formData, id: selectedUser.id }, {
+      onSuccess: () => {
+        setIsEditUserOpen(false)
+        resetForm()
+        refetch()
+      },
+
+      onError: (error) => {
+        console.error("Edit User Error:", {
+          error: error.message,
+          formData: formData,
+          time: new Date().toISOString(),
+        })
+      },
+    })
   }
+
+  const { mutate: changePassword, isPending: isChangingPassword } = useEditUserPassword()
 
   const handleChangePassword = () => {
     if (!selectedUser) return
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords don't match!")
+      toast.error("New passwords don't match!")
       return
     }
+
+    changePassword({ password: passwordData.newPassword, id: selectedUser.id }, {
+      onSuccess: () => {
+        setIsChangePasswordOpen(false)
+        resetForm()
+        refetch()
+      },
+      onError: (error) => {
+        console.error("Change Password Error:", {
+          error: error.message,
+          time: new Date().toISOString(),
+        })
+      },
+    })
+  }
+
+  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser()
+
+  const handleDeleteUser = async () => {
+    if(!selectedUser) return
+    
+    deleteUser(selectedUser.id, {
+      onSuccess: () => {
+        setIsConfirmationOpen(false)
+        resetForm()
+        refetch()
+      },
+      onError: (error) => {
+        console.error("Delete User Error:", {
+          error: error.message,
+          time: new Date().toISOString(),
+        })
+      },
+    })
   }
 
   const resetForm = () => {
@@ -176,6 +236,11 @@ const UserManagement = () => {
     setSelectedUser(user)
     setIsChangePasswordOpen(true)
   }
+
+  const openConfirmationModal = (user: User) => {
+    setSelectedUser(user);
+    setIsConfirmationOpen(true);
+  };
 
   const roles = ["All", "ADMIN", "USER"]
 
@@ -339,7 +404,7 @@ const UserManagement = () => {
                           <Key size={16} />
                           Change Password
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 text-red-600">
+                        <DropdownMenuItem className="gap-2 text-red-600" onClick={() => openConfirmationModal(user)}>
                           <Trash2 size={16} />
                           Delete
                         </DropdownMenuItem>
@@ -685,7 +750,10 @@ const UserManagement = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button disabled={isUpdating} type="submit">
+              {isUpdating && <Loader2 className="animate-spin mr-2" />}
+                Save Changes
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -835,11 +903,27 @@ const UserManagement = () => {
               <Button variant="outline" onClick={() => setIsChangePasswordOpen(false)} type="button">
                 Cancel
               </Button>
-              <Button>Change Password</Button>
+              <Button disabled={isChangingPassword}>
+              {isChangingPassword && <Loader2 className="animate-spin mr-2" />}
+                  Change Password
+                </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        onConfirm={handleDeleteUser}
+        itemName={selectedUser?.email}
+        isLoading={isDeleting}
+        title="Delete User"
+        description="Are you sure you want to delete this user?"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

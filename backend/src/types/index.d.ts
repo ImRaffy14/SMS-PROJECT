@@ -24,3 +24,11 @@ export interface LoginUser {
 export interface User extends RegisterUser {
     id: string;
 }
+
+export interface EditUser {
+    imagePublicId?: string;
+    imageUrl?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+}
