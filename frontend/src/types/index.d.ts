@@ -14,6 +14,7 @@ export interface NewUser {
     email: string;
     password: string;
     role: string;
+    department: string;
 }
 
 export interface User {
@@ -21,10 +22,21 @@ export interface User {
     name: string;
     email: string;
     role: string;
+    department: string;
     image: {
         imageUrl: string;
         publicId: string;
     }
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Announcement {
+    id: string;
+    title: string;
+    message: string;
+    audience: string;
+    status: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -58,4 +70,16 @@ export interface ConfirmationModalProps {
     isLoading?: boolean;
     confirmText?: string;
     cancelText?: string;
+}
+
+export interface GradingSystem {
+    id?: string;
+    name: string;
+    description: string;
+    type: string;
+    scale: string;
+    passingGrade: string;
+    isDefault: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }

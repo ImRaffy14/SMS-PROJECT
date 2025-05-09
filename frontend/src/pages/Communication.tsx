@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MessageSquare, Search, Filter, MoreVertical, Edit, Trash2, Eye, Bell } from "lucide-react"
+import { MessageSquare, Search, Filter, MoreVertical, Edit, Trash2, Eye, Bell, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,85 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useQuery } from "@tanstack/react-query"
+import { getAnnouncements } from "@/api/announcement"
+import { Announcement } from "@/types"
+import FullPageLoader from "@/components/FullpageLoader"
+import {
+  useCreateAnnouncement,
+  useEditAnnouncement,
+  useDeleteAnnouncement
+} from "@/hooks/useCommunication"
+import { ConfirmationModal } from "@/components/ConfirmationModal"
 
-// Mock data
-const announcements = [
-  {
-    id: 1,
-    title: "End of Term Exams",
-    message:
-      "End of term exams will begin on November 15th. Please ensure all assignments are submitted by November 10th.",
-    audience: "All",
-    status: "Published",
-    publishedAt: "2023-10-20 09:30 AM",
-    author: "Principal Johnson",
-  },
-  {
-    id: 2,
-    title: "Parent-Teacher Meeting",
-    message: "Parent-teacher meetings will be held on November 5th. Please book your slots through the school portal.",
-    audience: "Parents",
-    status: "Published",
-    publishedAt: "2023-10-15 11:45 AM",
-    author: "Vice Principal Smith",
-  },
-  {
-    id: 3,
-    title: "Sports Day",
-    message:
-      "Annual sports day will be held on November 20th. All students are required to participate in at least one event.",
-    audience: "Students",
-    status: "Draft",
-    publishedAt: "",
-    author: "Sports Teacher Davis",
-  },
-  {
-    id: 4,
-    title: "Holiday Notice",
-    message: "The school will remain closed on October 31st due to local elections.",
-    audience: "All",
-    status: "Published",
-    publishedAt: "2023-10-25 08:15 AM",
-    author: "Admin Office",
-  },
-  {
-    id: 5,
-    title: "Fee Payment Reminder",
-    message:
-      "This is a reminder that the second semester fees are due by November 10th. Please make the payment to avoid late fees.",
-    audience: "Parents",
-    status: "Scheduled",
-    publishedAt: "2023-11-01 08:00 AM",
-    author: "Accounts Department",
-  },
-  {
-    id: 6,
-    title: "Library Book Return",
-    message: "All library books must be returned by November 5th for the annual inventory check.",
-    audience: "Students",
-    status: "Published",
-    publishedAt: "2023-10-22 10:15 AM",
-    author: "Librarian Wilson",
-  },
-  {
-    id: 7,
-    title: "Career Counseling Session",
-    message: "Career counseling sessions for final year students will be held from November 7th to 9th.",
-    audience: "Students",
-    status: "Draft",
-    publishedAt: "",
-    author: "Counselor Roberts",
-  },
-  {
-    id: 8,
-    title: "Annual Day Celebration",
-    message: "Annual day celebration will be held on December 15th. Rehearsals will begin from November 25th.",
-    audience: "All",
-    status: "Scheduled",
-    publishedAt: "2023-11-15 09:00 AM",
-    author: "Cultural Committee",
-  },
-]
+
 
 const messages = [
   {
@@ -189,10 +122,10 @@ export default function CommunicationModule() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedAudience, setSelectedAudience] = useState("All")
   const [activeTab, setActiveTab] = useState("announcements")
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false)
 
   // Pagination state
   const [currentAnnouncementPage, setCurrentAnnouncementPage] = useState(1)
-  const [currentMessagePage, setCurrentMessagePage] = useState(1)
   const itemsPerPage = 5
 
   const [newAnnouncement, setNewAnnouncement] = useState({
@@ -208,24 +141,29 @@ export default function CommunicationModule() {
     message: "",
   })
 
+  const {
+    data: announcements,
+    isLoading,
+    refetch,
+  } = useQuery<Announcement[], Error>({
+    queryKey: ["announcements"],
+    queryFn: getAnnouncements,
+    staleTime: 60000,
+    gcTime: 300000,
+  })
+
   const audienceOptions = ["All", "Students", "Parents", "Teachers", "Staff"]
 
-  const filteredAnnouncements = announcements.filter((announcement) => {
+  const filteredAnnouncements: Announcement[] = announcements?.filter((announcement) => {
     const matchesSearch =
       announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       announcement.message.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesAudience = selectedAudience === "All" || announcement.audience === selectedAudience
+    const matchesAudience =
+      selectedAudience === "All" || announcement.audience === selectedAudience
     return matchesSearch && matchesAudience
-  })
+  }) ?? []
+  
 
-  const filteredMessages = messages.filter((message) => {
-    return (
-      message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.recipient.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })
 
   // Pagination logic for announcements
   const indexOfLastAnnouncement = currentAnnouncementPage * itemsPerPage
@@ -233,11 +171,6 @@ export default function CommunicationModule() {
   const currentAnnouncements = filteredAnnouncements.slice(indexOfFirstAnnouncement, indexOfLastAnnouncement)
   const totalAnnouncementPages = Math.ceil(filteredAnnouncements.length / itemsPerPage)
 
-  // Pagination logic for messages
-  const indexOfLastMessage = currentMessagePage * itemsPerPage
-  const indexOfFirstMessage = indexOfLastMessage - itemsPerPage
-  const currentMessages = filteredMessages.slice(indexOfFirstMessage, indexOfLastMessage)
-  const totalMessagePages = Math.ceil(filteredMessages.length / itemsPerPage)
 
   const resetAnnouncementForm = () => {
     setNewAnnouncement({
@@ -256,12 +189,12 @@ export default function CommunicationModule() {
     })
   }
 
-  const openViewAnnouncementModal = (announcement: any) => {
+  const openViewAnnouncementModal = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement)
     setIsViewAnnouncementOpen(true)
   }
 
-  const openEditAnnouncementModal = (announcement: any) => {
+  const openEditAnnouncementModal = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement)
     setNewAnnouncement({
       title: announcement.title,
@@ -272,9 +205,59 @@ export default function CommunicationModule() {
     setIsEditAnnouncementOpen(true)
   }
 
-  const openViewMessageModal = (message: any) => {
-    setSelectedMessage(message)
-    setIsViewMessageOpen(true)
+  const { mutate: createAnnouncement } = useCreateAnnouncement()
+
+  const handleAddAnnouncement = (announcement: Announcement) => {
+    createAnnouncement(announcement, {
+      onSuccess: () => {
+        setIsAddAnnouncementOpen(false)
+        resetAnnouncementForm()
+        refetch()
+      },
+      onError: (error) => {
+        console.error("Error creating announcement:", error)
+      }
+    })
+  }
+
+  const { mutate: editAnnouncement, isPending: isEditing } = useEditAnnouncement()
+
+  const handleEditAnnouncement = (announcement: Announcement) => {
+    editAnnouncement({data: announcement, id: selectedAnnouncement?.id}, {
+      onSuccess: () => {
+        setIsEditAnnouncementOpen(false)
+        resetAnnouncementForm()
+        refetch()
+      },
+      onError: (error) => {
+        console.error("Error editing announcement:", error)
+      },
+    })
+  }
+
+    const openConfirmationModal = (announcement: Announcement) => {
+      setSelectedAnnouncement(announcement);
+      setIsConfirmationModalOpen(true);
+    };
+  const { mutate: deleteAnnouncement, isPending: isDeleting } = useDeleteAnnouncement()
+
+  const handleDeleteAnnouncement = () => {
+    if(!selectedAnnouncement) return
+
+    console.log(selectedAnnouncement)
+    deleteAnnouncement(selectedAnnouncement.id, {
+      onSuccess: () => {
+        setIsConfirmationModalOpen(false)
+        refetch()
+      },
+      onError: (error) => {
+        console.error("Error deleting announcement:", error)
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <FullPageLoader message="Loading announcements..." showLogo={true} />
   }
 
   return (
@@ -287,18 +270,13 @@ export default function CommunicationModule() {
             <Bell size={16} />
             New Announcement
           </Button>
-          <Button className="gap-2" onClick={() => setIsComposeMessageOpen(true)}>
-            <MessageSquare size={16} />
-            Compose Message
-          </Button>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="announcements" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className=" w-full ">
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
         </TabsList>
 
         {/* Announcements Tab */}
@@ -379,7 +357,6 @@ export default function CommunicationModule() {
                     <TableHead>Audience</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Published At</TableHead>
-                    <TableHead>Author</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -406,8 +383,7 @@ export default function CommunicationModule() {
                           {announcement.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{announcement.publishedAt || "—"}</TableCell>
-                      <TableCell>{announcement.author}</TableCell>
+                      <TableCell>{announcement.createdAt || "—"}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -424,7 +400,7 @@ export default function CommunicationModule() {
                               <Edit size={16} />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-red-600">
+                            <DropdownMenuItem className="gap-2 text-red-600" onClick={() => openConfirmationModal(announcement)}>
                               <Trash2 size={16} />
                               Delete
                             </DropdownMenuItem>
@@ -466,129 +442,6 @@ export default function CommunicationModule() {
             </CardFooter>
           </Card>
         </TabsContent>
-
-        {/* Messages Tab */}
-        <TabsContent value="messages" className="space-y-4">
-          {/* Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-              <CardDescription>Filter messages</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search messages..."
-                    className="pl-9"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value)
-                      setCurrentMessagePage(1) // Reset to first page on search
-                    }}
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => {
-                    setSearchTerm("")
-                    setCurrentMessagePage(1) // Reset to first page on filter reset
-                  }}
-                >
-                  Reset Filters
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Messages Table */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Messages</CardTitle>
-                  <CardDescription>{filteredMessages.length} messages found</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Sender</TableHead>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentMessages.map((message) => (
-                    <TableRow key={message.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{message.sender}</div>
-                            <div className="text-xs text-gray-500">{message.senderRole}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{message.recipient}</TableCell>
-                      <TableCell>
-                        <div className="font-medium">{message.subject}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-[200px]">{message.message}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={message.status === "Read" ? "secondary" : "default"}>{message.status}</Badge>
-                      </TableCell>
-                      <TableCell>{message.sentAt}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => openViewMessageModal(message)}>
-                          <Eye size={16} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {Math.min((currentMessagePage - 1) * itemsPerPage + 1, filteredMessages.length)} to{" "}
-                {Math.min(currentMessagePage * itemsPerPage, filteredMessages.length)} of {filteredMessages.length}{" "}
-                messages
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentMessagePage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentMessagePage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="text-sm">
-                  Page {currentMessagePage} of {totalMessagePages || 1}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentMessagePage((prev) => Math.min(prev + 1, totalMessagePages))}
-                  disabled={currentMessagePage === totalMessagePages || totalMessagePages === 0}
-                >
-                  Next
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Add Announcement Modal */}
@@ -610,8 +463,12 @@ export default function CommunicationModule() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setIsAddAnnouncementOpen(false)
-              resetAnnouncementForm()
+              handleAddAnnouncement({
+                ...newAnnouncement,
+                id: selectedAnnouncement?.id || 0,
+                createdAt: selectedAnnouncement?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
             }}
           >
             <div className="grid gap-4 py-4">
@@ -819,8 +676,12 @@ export default function CommunicationModule() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setIsEditAnnouncementOpen(false)
-              resetAnnouncementForm()
+              handleEditAnnouncement({
+                ...newAnnouncement,
+                id: selectedAnnouncement?.id || 0,
+                createdAt: selectedAnnouncement?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
             }}
           >
             <div className="grid gap-4 py-4">
@@ -918,7 +779,10 @@ export default function CommunicationModule() {
               >
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button disabled={isEditing} type="submit">
+                {isEditing && <Loader2 className="animate-spin" size={16} />}
+                Save Changes
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -1095,6 +959,18 @@ export default function CommunicationModule() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmationModal 
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={handleDeleteAnnouncement}
+        itemName={selectedAnnouncement?.email}
+        isLoading={isDeleting}
+        title="Delete User"
+        description="Are you sure you want to delete this announcement?"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

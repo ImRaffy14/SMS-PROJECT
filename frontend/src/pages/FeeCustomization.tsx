@@ -2,19 +2,12 @@
 
 import { useState } from "react"
 import {
-  DollarSign,
   Search,
-  Filter,
   MoreVertical,
-  Edit,
   Trash2,
   Eye,
   Plus,
-  CreditCard,
-  Receipt,
-  Percent,
-  Clock,
-  FileText,
+  BookOpenText,
 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -28,467 +21,163 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { ConfirmationModal } from "@/components/ConfirmationModal"
+import { useQuery } from "@tanstack/react-query"
+import { getGradingSystem } from "@/api/gradingSystem"
+import { GradingSystem } from "@/types"
+import { useCreateGradingSystem, useDeleteGradingSystem } from "@/hooks/useGradingSystem"
+import FullPageLoader from "@/components/FullpageLoader"
 
-// Mock data
-const feeStructures = [
-  {
-    id: 1,
-    name: "Tuition Fee",
-    amount: 5000,
-    frequency: "Semester",
-    class: "All Classes",
-    installments: true,
-    discountEligible: true,
-  },
-  {
-    id: 2,
-    name: "Library Fee",
-    amount: 1000,
-    frequency: "Annual",
-    class: "All Classes",
-    installments: false,
-    discountEligible: false,
-  },
-  {
-    id: 3,
-    name: "Computer Lab Fee",
-    amount: 1500,
-    frequency: "Semester",
-    class: "High School",
-    installments: false,
-    discountEligible: true,
-  },
-  {
-    id: 4,
-    name: "Sports Fee",
-    amount: 800,
-    frequency: "Annual",
-    class: "All Classes",
-    installments: false,
-    discountEligible: true,
-  },
-  {
-    id: 5,
-    name: "Science Lab Fee",
-    amount: 1200,
-    frequency: "Semester",
-    class: "High School",
-    installments: false,
-    discountEligible: false,
-  },
-  {
-    id: 6,
-    name: "Development Fee",
-    amount: 2000,
-    frequency: "Annual",
-    class: "All Classes",
-    installments: true,
-    discountEligible: true,
-  },
-  {
-    id: 7,
-    name: "Examination Fee",
-    amount: 1500,
-    frequency: "Semester",
-    class: "All Classes",
-    installments: false,
-    discountEligible: false,
-  },
-  {
-    id: 8,
-    name: "Transportation Fee",
-    amount: 3000,
-    frequency: "Monthly",
-    class: "All Classes",
-    installments: true,
-    discountEligible: true,
-  },
-]
 
-const discounts = [
-  {
-    id: 1,
-    name: "Sibling Discount",
-    type: "Percentage",
-    value: 10,
-    applicableFees: "All Fees",
-    criteria: "For families with more than one child enrolled",
-  },
-  {
-    id: 2,
-    name: "Merit Scholarship",
-    type: "Percentage",
-    value: 25,
-    applicableFees: "Tuition Fee",
-    criteria: "For students with >90% marks in previous academic year",
-  },
-  {
-    id: 3,
-    name: "Early Payment Discount",
-    type: "Fixed",
-    value: 500,
-    applicableFees: "Tuition Fee",
-    criteria: "For payments made before the due date",
-  },
-  {
-    id: 4,
-    name: "Sports Excellence",
-    type: "Percentage",
-    value: 15,
-    applicableFees: "All Fees",
-    criteria: "For students representing school in state/national level sports",
-  },
-  {
-    id: 5,
-    name: "Financial Aid",
-    type: "Percentage",
-    value: 50,
-    applicableFees: "All Fees",
-    criteria: "Based on family income and financial need assessment",
-  },
-  {
-    id: 6,
-    name: "Staff Children Discount",
-    type: "Percentage",
-    value: 75,
-    applicableFees: "All Fees",
-    criteria: "For children of school staff members",
-  },
-  {
-    id: 7,
-    name: "Academic Excellence",
-    type: "Fixed",
-    value: 2000,
-    applicableFees: "Tuition Fee",
-    criteria: "For students with consistent academic excellence",
-  },
-]
-
-export default function FeeCustomization() {
-  const [isAddFeeOpen, setIsAddFeeOpen] = useState(false)
-  const [isViewFeeOpen, setIsViewFeeOpen] = useState(false)
-  // const [isEditFeeOpen, setIsEditFeeOpen] = useState(false)
-  const [isAddDiscountOpen, setIsAddDiscountOpen] = useState(false)
-  const [isViewDiscountOpen, setIsViewDiscountOpen] = useState(false)
-  const [isEditDiscountOpen, setIsEditDiscountOpen] = useState(false)
-  const [selectedFee, setSelectedFee] = useState<any>(null)
-  const [selectedDiscount, setSelectedDiscount] = useState<any>(null)
+export default function SchoolConfiguration() {
+  const [isAddGradingOpen, setIsAddGradingOpen] = useState(false)
+  const [isViewGradingOpen, setIsViewGradingOpen] = useState(false)
+  const [selectedGrading, setSelectedGrading] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedClass, setSelectedClass] = useState("All")
-  const [activeTab, setActiveTab] = useState("fees")
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false)
+
+  
+  const { data: gradingSystems, isLoading: isGradingLoading, refetch } = useQuery<GradingSystem[], Error>({
+    queryKey: ["gradingSystems"],
+    queryFn: getGradingSystem,
+    staleTime: 60000,
+    gcTime: 300000,
+  })
+
 
   // Pagination state
-  const [currentFeePage, setCurrentFeePage] = useState(1)
-  const [currentDiscountPage, setCurrentDiscountPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
-  const [newFee, setNewFee] = useState({
+  const [newGrading, setNewGrading] = useState({
     name: "",
-    amount: 0,
-    frequency: "Semester",
-    class: "All Classes",
-    installments: false,
-    discountEligible: false,
+    type: "Letter Grades",
+    scale: "",
+    passingGrade: "",
+    description: "",
+    isDefault: false,
   })
 
-  const [newDiscount, setNewDiscount] = useState({
-    name: "",
-    type: "Percentage",
-    value: 0,
-    applicableFees: "All Fees",
-    criteria: "",
-  })
+  const gradingTypeOptions = ["Letter Grades", "Numeric", "Competency"]
 
-  const classOptions = ["All", "All Classes", "Primary", "Middle School", "High School"]
-  const frequencyOptions = ["Annual", "Semester", "Monthly", "One-time"]
+  const filteredGrading: GradingSystem[] = gradingSystems?.filter((grading) => {
+    return grading.name.toLowerCase().includes(searchTerm.toLowerCase())
+  }) ?? []
 
-  const filteredFees = feeStructures.filter((fee) => {
-    const matchesSearch = fee.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesClass = selectedClass === "All" || fee.class === selectedClass
-    return matchesSearch && matchesClass
-  })
 
-  const filteredDiscounts = discounts.filter((discount) => {
-    return discount.name.toLowerCase().includes(searchTerm.toLowerCase())
-  })
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentGrading = filteredGrading.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil( filteredGrading.length / itemsPerPage )
 
-  // Pagination logic for fees
-  const indexOfLastFee = currentFeePage * itemsPerPage
-  const indexOfFirstFee = indexOfLastFee - itemsPerPage
-  const currentFees = filteredFees.slice(indexOfFirstFee, indexOfLastFee)
-  const totalFeePages = Math.ceil(filteredFees.length / itemsPerPage)
+  console.log("Filtered Grading Systems:", filteredGrading)
+  console.log("Current Grading Systems:", currentGrading)
+  console.log("Current Page:", currentPage)
+  console.log("Total Pages:", totalPages)
+  console.log("indexOfLastItem:", indexOfLastItem)
+  console.log("indexOfFirstItem:", indexOfFirstItem)
+  
 
-  // Pagination logic for discounts
-  const indexOfLastDiscount = currentDiscountPage * itemsPerPage
-  const indexOfFirstDiscount = indexOfLastDiscount - itemsPerPage
-  const currentDiscounts = filteredDiscounts.slice(indexOfFirstDiscount, indexOfLastDiscount)
-  const totalDiscountPages = Math.ceil(filteredDiscounts.length / itemsPerPage)
-
-  const resetFeeForm = () => {
-    setNewFee({
+  const resetGradingForm = () => {
+    setNewGrading({
       name: "",
-      amount: 0,
-      frequency: "Semester",
-      class: "All Classes",
-      installments: false,
-      discountEligible: false,
+      type: "Letter Grades",
+      scale: "",
+      passingGrade: "",
+      description: "",
+      isDefault: false,
     })
   }
 
-  const resetDiscountForm = () => {
-    setNewDiscount({
-      name: "",
-      type: "Percentage",
-      value: 0,
-      applicableFees: "All Fees",
-      criteria: "",
-    })
+  const openViewGradingModal = (grading: any) => {
+    setSelectedGrading(grading)
+    setIsViewGradingOpen(true)
+  }
+  
+  const openDeleteGrading = (grading: any) => {
+    setSelectedGrading(grading)
+    setIsConfirmationModalOpen(true)
   }
 
-  const openViewFeeModal = (fee: any) => {
-    setSelectedFee(fee)
-    setIsViewFeeOpen(true)
+  const { mutate: createGradingSystem, isPending: isCreating } = useCreateGradingSystem()
+  const handleCreateGrading = () => {
+    createGradingSystem(newGrading), {
+      onSuccess: () => {
+        refetch()
+        setIsAddGradingOpen(false)
+        resetGradingForm()
+      },
+      onError: (error: Error) => {
+        console.error("Create Grading System Error:", error)
+      },
+    }
   }
 
-  const openEditFeeModal = (fee: any) => {
-    setSelectedFee(fee)
-    setNewFee({
-      name: fee.name,
-      amount: fee.amount,
-      frequency: fee.frequency,
-      class: fee.class,
-      installments: fee.installments,
-      discountEligible: fee.discountEligible,
-    })
-    // setIsEditFeeOpen(true)
+
+  const { mutate: deleteGradingSystem, isPending: isDeleting } = useDeleteGradingSystem()
+
+  const handleDeleteGrading = () => {
+    if (!selectedGrading) return
+    
+    deleteGradingSystem(selectedGrading.id), {
+      onSuccess: () => {
+        refetch()
+        setSelectedGrading(null)
+      },
+      onError: (error: Error) => {
+        console.error("Delete Grading System Error:", error)
+      }
+    }
   }
 
-  const openViewDiscountModal = (discount: any) => {
-    setSelectedDiscount(discount)
-    setIsViewDiscountOpen(true)
-  }
-
-  const openEditDiscountModal = (discount: any) => {
-    setSelectedDiscount(discount)
-    setNewDiscount({
-      name: discount.name,
-      type: discount.type,
-      value: discount.value,
-      applicableFees: discount.applicableFees,
-      criteria: discount.criteria,
-    })
-    setIsEditDiscountOpen(true)
+  if (isGradingLoading) {
+    return <FullPageLoader message="Loading announcements..." showLogo={true} />
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Fee Customization</h2>
+        <h2 className="text-2xl font-bold">School Configuration</h2>
         <div className="flex gap-2">
-          <Button className="gap-2" onClick={() => setIsAddFeeOpen(true)}>
+          <Button className="gap-2" onClick={() => {
+            setIsAddGradingOpen(true)
+          }}>
             <Plus size={16} />
-            Add Fee Structure
-          </Button>
-          <Button className="gap-2" onClick={() => setIsAddDiscountOpen(true)}>
-            <Percent size={16} />
-            Add Discount
+            Add Grading System
           </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="fees" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="fees">Fee Structures</TabsTrigger>
-          <TabsTrigger value="discounts">Discounts & Scholarships</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+      <Tabs defaultValue="grading">
+        <TabsList className="w-full">
+          <TabsTrigger value="grading">
+            <BookOpenText className="mr-2 h-4 w-4" />
+            Grading Systems
+          </TabsTrigger>
         </TabsList>
 
-        {/* Fees Tab */}
-        <TabsContent value="fees" className="space-y-4">
+        {/* Grading Systems Tab */}
+        <TabsContent value="grading" className="space-y-4">
           {/* Filters */}
           <Card>
             <CardHeader>
               <CardTitle>Filters</CardTitle>
-              <CardDescription>Filter fee structures</CardDescription>
+              <CardDescription>Filter grading systems</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Search fee structures..."
+                    placeholder="Search grading systems..."
                     className="pl-9"
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value)
-                      setCurrentFeePage(1) // Reset to first page on search
-                    }}
-                  />
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="justify-start gap-2">
-                      <Filter size={16} />
-                      Class: {selectedClass}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {classOptions.map((option) => (
-                      <DropdownMenuItem
-                        key={option}
-                        onClick={() => {
-                          setSelectedClass(option)
-                          setCurrentFeePage(1) // Reset to first page on filter change
-                        }}
-                      >
-                        {option}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => {
-                    setSearchTerm("")
-                    setSelectedClass("All")
-                    setCurrentFeePage(1) // Reset to first page on filter reset
-                  }}
-                >
-                  Reset Filters
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Fees Table */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Fee Structures</CardTitle>
-                  <CardDescription>{filteredFees.length} fee structures found</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fee Name</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Frequency</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead>Installments</TableHead>
-                    <TableHead>Discount Eligible</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentFees.map((fee) => (
-                    <TableRow key={fee.id}>
-                      <TableCell>
-                        <div className="font-medium">{fee.name}</div>
-                      </TableCell>
-                      <TableCell>${fee.amount}</TableCell>
-                      <TableCell>{fee.frequency}</TableCell>
-                      <TableCell>{fee.class}</TableCell>
-                      <TableCell>
-                        {fee.installments ? (
-                          <Badge variant="outline">Yes</Badge>
-                        ) : (
-                          <Badge variant="secondary">No</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {fee.discountEligible ? (
-                          <Badge variant="outline">Yes</Badge>
-                        ) : (
-                          <Badge variant="secondary">No</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2" onClick={() => openViewFeeModal(fee)}>
-                              <Eye size={16} />
-                              View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onClick={() => openEditFeeModal(fee)}>
-                              <Edit size={16} />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-red-600">
-                              <Trash2 size={16} />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {Math.min((currentFeePage - 1) * itemsPerPage + 1, filteredFees.length)} to{" "}
-                {Math.min(currentFeePage * itemsPerPage, filteredFees.length)} of {filteredFees.length} fee structures
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentFeePage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentFeePage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="text-sm">
-                  Page {currentFeePage} of {totalFeePages || 1}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentFeePage((prev) => Math.min(prev + 1, totalFeePages))}
-                  disabled={currentFeePage === totalFeePages || totalFeePages === 0}
-                >
-                  Next
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-
-        {/* Discounts Tab */}
-        <TabsContent value="discounts" className="space-y-4">
-          {/* Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-              <CardDescription>Filter discounts and scholarships</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search discounts..."
-                    className="pl-9"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value)
-                      setCurrentDiscountPage(1) // Reset to first page on search
+                      setCurrentPage(1)
                     }}
                   />
                 </div>
@@ -498,7 +187,7 @@ export default function FeeCustomization() {
                   className="gap-2"
                   onClick={() => {
                     setSearchTerm("")
-                    setCurrentDiscountPage(1) // Reset to first page on filter reset
+                    setCurrentPage(1)
                   }}
                 >
                   Reset Filters
@@ -507,13 +196,13 @@ export default function FeeCustomization() {
             </CardContent>
           </Card>
 
-          {/* Discounts Table */}
+          {/* Grading Systems Table */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Discounts & Scholarships</CardTitle>
-                  <CardDescription>{filteredDiscounts.length} discounts found</CardDescription>
+                  <CardTitle>Grading Systems</CardTitle>
+                  <CardDescription>{filteredGrading.length} grading systems configured</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -521,24 +210,30 @@ export default function FeeCustomization() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>System Name</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Applicable Fees</TableHead>
+                    <TableHead>Scale</TableHead>
+                    <TableHead>Passing Grade</TableHead>
+                    <TableHead>Default</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentDiscounts.map((discount) => (
-                    <TableRow key={discount.id}>
+                  {currentGrading.map((grading) => (
+                    <TableRow key={grading.id}>
                       <TableCell>
-                        <div className="font-medium">{discount.name}</div>
+                        <div className="font-medium">{grading.name}</div>
                       </TableCell>
-                      <TableCell>{discount.type}</TableCell>
+                      <TableCell>{grading.type}</TableCell>
+                      <TableCell>{grading.scale}</TableCell>
+                      <TableCell>{grading.passingGrade}</TableCell>
                       <TableCell>
-                        {discount.type === "Percentage" ? `${discount.value}%` : `$${discount.value}`}
+                        {grading.isDefault ? (
+                          <Badge variant="default">Default</Badge>
+                        ) : (
+                          <Badge variant="secondary">No</Badge>
+                        )}
                       </TableCell>
-                      <TableCell>{discount.applicableFees}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -547,15 +242,11 @@ export default function FeeCustomization() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2" onClick={() => openViewDiscountModal(discount)}>
+                            <DropdownMenuItem className="gap-2" onClick={() => openViewGradingModal(grading)}>
                               <Eye size={16} />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onClick={() => openEditDiscountModal(discount)}>
-                              <Edit size={16} />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-red-600">
+                            <DropdownMenuItem className="gap-2 text-red-600" onClick={() => openDeleteGrading(grading)}>
                               <Trash2 size={16} />
                               Delete
                             </DropdownMenuItem>
@@ -569,27 +260,26 @@ export default function FeeCustomization() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <div className="text-sm text-gray-500">
-                Showing {Math.min((currentDiscountPage - 1) * itemsPerPage + 1, filteredDiscounts.length)} to{" "}
-                {Math.min(currentDiscountPage * itemsPerPage, filteredDiscounts.length)} of {filteredDiscounts.length}{" "}
-                discounts
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredGrading.length)} to{" "}
+                {Math.min(currentPage * itemsPerPage, filteredGrading.length)} of {filteredGrading.length} systems
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentDiscountPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentDiscountPage === 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
                 >
                   Previous
                 </Button>
                 <div className="text-sm">
-                  Page {currentDiscountPage} of {totalDiscountPages || 1}
+                  Page {currentPage} of {totalPages || 1}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentDiscountPage((prev) => Math.min(prev + 1, totalDiscountPages))}
-                  disabled={currentDiscountPage === totalDiscountPages || totalDiscountPages === 0}
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
                 >
                   Next
                 </Button>
@@ -598,151 +288,61 @@ export default function FeeCustomization() {
           </Card>
         </TabsContent>
 
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fee Reports</CardTitle>
-              <CardDescription>Generate and view fee-related reports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Receipt size={18} />
-                      Fee Collection Report
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500">View total fee collection by class, period, or fee type</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Clock size={18} />
-                      Outstanding Dues Report
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500">View list of students with pending fee payments</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Percent size={18} />
-                      Discount Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500">View total discounts applied by discount type</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <CreditCard size={18} />
-                      Payment Method Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500">View fee collection by payment method</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText size={18} />
-                      Custom Report
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500">Generate custom reports with selected parameters</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
-      {/* Add Fee Modal */}
+
+      {/* Add Grading System Modal */}
       <Dialog
-        open={isAddFeeOpen}
+        open={isAddGradingOpen}
         onOpenChange={(open) => {
           if (!open) {
-            resetFeeForm()
+            resetGradingForm()
           }
-          setIsAddFeeOpen(open)
+          setIsAddGradingOpen(open)
         }}
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Add Fee Structure</DialogTitle>
-            <DialogDescription>Create a new fee structure for students.</DialogDescription>
+            <DialogTitle>Add Grading System</DialogTitle>
+            <DialogDescription>Create a new grading system for student evaluation.</DialogDescription>
           </DialogHeader>
 
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setIsAddFeeOpen(false)
-              resetFeeForm()
+              setIsAddGradingOpen(false)
+              handleCreateGrading()
+              resetGradingForm()
             }}
           >
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">
-                  Fee Name <span className="text-red-500">*</span>
+                <Label htmlFor="grading-name">
+                  System Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="name"
-                  value={newFee.name}
-                  onChange={(e) => setNewFee({ ...newFee, name: e.target.value })}
-                  placeholder="e.g., Tuition Fee"
+                  id="grading-name"
+                  value={newGrading.name}
+                  onChange={(e) => setNewGrading({ ...newGrading, name: e.target.value })}
+                  placeholder="e.g., Standard Grading"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="amount">
-                  Amount <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="amount"
-                    type="number"
-                    value={newFee.amount || ""}
-                    onChange={(e) => setNewFee({ ...newFee, amount: Number.parseFloat(e.target.value) })}
-                    placeholder="0.00"
-                    className="pl-9"
-                    required
-                    min={0}
-                    step={0.01}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="frequency">
-                  Frequency <span className="text-red-500">*</span>
+                <Label htmlFor="grading-type">
+                  Grading Type <span className="text-red-500">*</span>
                 </Label>
                 <Select
-                  value={newFee.frequency}
-                  onValueChange={(value) => setNewFee({ ...newFee, frequency: value })}
+                  value={newGrading.type}
+                  onValueChange={(value) => setNewGrading({ ...newGrading, type: value })}
                   required
                 >
-                  <SelectTrigger id="frequency">
-                    <SelectValue placeholder="Select frequency" />
+                  <SelectTrigger id="grading-type">
+                    <SelectValue placeholder="Select grading type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {frequencyOptions.map((option) => (
+                    {gradingTypeOptions.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
                       </SelectItem>
@@ -752,39 +352,60 @@ export default function FeeCustomization() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="class">
-                  Applicable Class <span className="text-red-500">*</span>
+                <Label htmlFor="grading-scale">
+                  Grading Scale <span className="text-red-500">*</span>
                 </Label>
-                <Select value={newFee.class} onValueChange={(value) => setNewFee({ ...newFee, class: value })} required>
-                  <SelectTrigger id="class">
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classOptions.slice(1).map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="grading-scale"
+                  value={newGrading.scale}
+                  onChange={(e) => setNewGrading({ ...newGrading, scale: e.target.value })}
+                  placeholder={
+                    newGrading.type === "Letter Grades" 
+                      ? "e.g., A, B, C, D, F" 
+                      : newGrading.type === "Numeric" 
+                        ? "e.g., 0-100" 
+                        : "e.g., Emerging, Developing, Proficient"
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passing-grade">
+                  Passing Grade <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="passing-grade"
+                  value={newGrading.passingGrade}
+                  onChange={(e) => setNewGrading({ ...newGrading, passingGrade: e.target.value })}
+                  placeholder={
+                    newGrading.type === "Letter Grades" 
+                      ? "e.g., D" 
+                      : newGrading.type === "Numeric" 
+                        ? "e.g., 40" 
+                        : "e.g., Developing"
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="grading-description">Description</Label>
+                <Input
+                  id="grading-description"
+                  value={newGrading.description}
+                  onChange={(e) => setNewGrading({ ...newGrading, description: e.target.value })}
+                  placeholder="Brief description of the grading system"
+                />
               </div>
 
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="installments"
-                  checked={newFee.installments}
-                  onCheckedChange={(checked) => setNewFee({ ...newFee, installments: checked })}
+                  id="default-grading"
+                  checked={newGrading.isDefault}
+                  onCheckedChange={(checked) => setNewGrading({ ...newGrading, isDefault: checked })}
                 />
-                <Label htmlFor="installments">Allow payment in installments</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="discountEligible"
-                  checked={newFee.discountEligible}
-                  onCheckedChange={(checked) => setNewFee({ ...newFee, discountEligible: checked })}
-                />
-                <Label htmlFor="discountEligible">Eligible for discounts</Label>
+                <Label htmlFor="default-grading">Set as default grading system</Label>
               </div>
             </div>
 
@@ -792,428 +413,95 @@ export default function FeeCustomization() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setIsAddFeeOpen(false)
-                  resetFeeForm()
+                  setIsAddGradingOpen(false)
+                  resetGradingForm()
                 }}
                 type="button"
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Fee Structure</Button>
+              <Button type="submit">Add Grading System</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* View Fee Modal */}
+      {/* View Grading System Modal */}
       <Dialog
-        open={isViewFeeOpen}
+        open={isViewGradingOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedFee(null)
+            setSelectedGrading(null)
           }
-          setIsViewFeeOpen(open)
+          setIsViewGradingOpen(open)
         }}
       >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Fee Structure Details</DialogTitle>
-            <DialogDescription>View fee structure information.</DialogDescription>
+            <DialogTitle>Grading System Details</DialogTitle>
+            <DialogDescription>View grading system information.</DialogDescription>
           </DialogHeader>
 
-          {selectedFee && (
+          {selectedGrading && (
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label className="text-gray-500">Fee Name</Label>
-                <p className="font-medium">{selectedFee.name}</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Amount</Label>
-                <p className="font-medium">${selectedFee.amount}</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Frequency</Label>
-                <p>{selectedFee.frequency}</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Applicable Class</Label>
-                <p>{selectedFee.class}</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Installments Allowed</Label>
-                <p>
-                  {selectedFee.installments ? (
-                    <Badge variant="outline">Yes</Badge>
-                  ) : (
-                    <Badge variant="secondary">No</Badge>
-                  )}
-                </p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Discount Eligible</Label>
-                <p>
-                  {selectedFee.discountEligible ? (
-                    <Badge variant="outline">Yes</Badge>
-                  ) : (
-                    <Badge variant="secondary">No</Badge>
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsViewFeeOpen(false)}>
-              Close
-            </Button>
-            <Button
-              onClick={() => {
-                setIsViewFeeOpen(false)
-                openEditFeeModal(selectedFee)
-              }}
-            >
-              Edit
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Discount Modal */}
-      <Dialog
-        open={isAddDiscountOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            resetDiscountForm()
-          }
-          setIsAddDiscountOpen(open)
-        }}
-      >
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Add Discount</DialogTitle>
-            <DialogDescription>Create a new discount or scholarship.</DialogDescription>
-          </DialogHeader>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              setIsAddDiscountOpen(false)
-              resetDiscountForm()
-            }}
-          >
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="discount-name">
-                  Discount Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="discount-name"
-                  value={newDiscount.name}
-                  onChange={(e) => setNewDiscount({ ...newDiscount, name: e.target.value })}
-                  placeholder="e.g., Sibling Discount"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="discount-type">
-                  Discount Type <span className="text-red-500">*</span>
-                </Label>
-                <RadioGroup
-                  value={newDiscount.type}
-                  onValueChange={(value) => setNewDiscount({ ...newDiscount, type: value })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Percentage" id="percentage" />
-                    <Label htmlFor="percentage">Percentage</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Fixed" id="fixed" />
-                    <Label htmlFor="fixed">Fixed Amount</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="discount-value">
-                  Value <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  {newDiscount.type === "Percentage" ? (
-                    <Percent className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  ) : (
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  )}
-                  <Input
-                    id="discount-value"
-                    type="number"
-                    value={newDiscount.value || ""}
-                    onChange={(e) => setNewDiscount({ ...newDiscount, value: Number.parseFloat(e.target.value) })}
-                    placeholder="0"
-                    className="pl-9"
-                    required
-                    min={0}
-                    max={newDiscount.type === "Percentage" ? 100 : undefined}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="applicable-fees">
-                  Applicable Fees <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={newDiscount.applicableFees}
-                  onValueChange={(value) => setNewDiscount({ ...newDiscount, applicableFees: value })}
-                  required
-                >
-                  <SelectTrigger id="applicable-fees">
-                    <SelectValue placeholder="Select applicable fees" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Fees">All Fees</SelectItem>
-                    <SelectItem value="Tuition Fee">Tuition Fee</SelectItem>
-                    <SelectItem value="Library Fee">Library Fee</SelectItem>
-                    <SelectItem value="Computer Lab Fee">Computer Lab Fee</SelectItem>
-                    <SelectItem value="Sports Fee">Sports Fee</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="criteria">
-                  Eligibility Criteria <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="criteria"
-                  value={newDiscount.criteria}
-                  onChange={(e) => setNewDiscount({ ...newDiscount, criteria: e.target.value })}
-                  placeholder="e.g., For families with more than one child enrolled"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsAddDiscountOpen(false)
-                  resetDiscountForm()
-                }}
-                type="button"
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Add Discount</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Discount Modal */}
-      <Dialog
-        open={isViewDiscountOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedDiscount(null)
-          }
-          setIsViewDiscountOpen(open)
-        }}
-      >
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Discount Details</DialogTitle>
-            <DialogDescription>View discount information.</DialogDescription>
-          </DialogHeader>
-
-          {selectedDiscount && (
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Discount Name</Label>
-                <p className="font-medium">{selectedDiscount.name}</p>
+                <Label className="text-gray-500">System Name</Label>
+                <p className="font-medium">{selectedGrading.name}</p>
               </div>
 
               <div className="grid gap-2">
                 <Label className="text-gray-500">Type</Label>
-                <p>{selectedDiscount.type}</p>
+                <p>{selectedGrading.type}</p>
               </div>
 
               <div className="grid gap-2">
-                <Label className="text-gray-500">Value</Label>
-                <p className="font-medium">
-                  {selectedDiscount.type === "Percentage" ? `${selectedDiscount.value}%` : `$${selectedDiscount.value}`}
+                <Label className="text-gray-500">Grading Scale</Label>
+                <p>{selectedGrading.scale}</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-gray-500">Passing Grade</Label>
+                <p>{selectedGrading.passingGrade}</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-gray-500">Description</Label>
+                <p className="p-3 bg-gray-50 rounded-md text-sm">{selectedGrading.description}</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-gray-500">Default System</Label>
+                <p>
+                  {selectedGrading.isDefault ? (
+                    <Badge variant="default">Default</Badge>
+                  ) : (
+                    <Badge variant="secondary">No</Badge>
+                  )}
                 </p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Applicable Fees</Label>
-                <p>{selectedDiscount.applicableFees}</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="text-gray-500">Eligibility Criteria</Label>
-                <p className="p-3 bg-gray-50 rounded-md text-sm">{selectedDiscount.criteria}</p>
               </div>
             </div>
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsViewDiscountOpen(false)}>
+            <Button variant="outline" onClick={() => setIsViewGradingOpen(false)}>
               Close
-            </Button>
-            <Button
-              onClick={() => {
-                setIsViewDiscountOpen(false)
-                openEditDiscountModal(selectedDiscount)
-              }}
-            >
-              Edit
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Discount Modal */}
-      <Dialog
-        open={isEditDiscountOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedDiscount(null)
-            resetDiscountForm()
-          }
-          setIsEditDiscountOpen(open)
-        }}
-      >
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Discount</DialogTitle>
-            <DialogDescription>Update the discount details.</DialogDescription>
-          </DialogHeader>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              setIsEditDiscountOpen(false)
-              resetDiscountForm()
-            }}
-          >
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-discount-name">
-                  Discount Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="edit-discount-name"
-                  value={newDiscount.name}
-                  onChange={(e) => setNewDiscount({ ...newDiscount, name: e.target.value })}
-                  placeholder="e.g., Sibling Discount"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-discount-type">
-                  Discount Type <span className="text-red-500">*</span>
-                </Label>
-                <RadioGroup
-                  value={newDiscount.type}
-                  onValueChange={(value) => setNewDiscount({ ...newDiscount, type: value })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Percentage" id="edit-percentage" />
-                    <Label htmlFor="edit-percentage">Percentage</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Fixed" id="edit-fixed" />
-                    <Label htmlFor="edit-fixed">Fixed Amount</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-discount-value">
-                  Value <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  {newDiscount.type === "Percentage" ? (
-                    <Percent className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  ) : (
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  )}
-                  <Input
-                    id="edit-discount-value"
-                    type="number"
-                    value={newDiscount.value || ""}
-                    onChange={(e) => setNewDiscount({ ...newDiscount, value: Number.parseFloat(e.target.value) })}
-                    placeholder="0"
-                    className="pl-9"
-                    required
-                    min={0}
-                    max={newDiscount.type === "Percentage" ? 100 : undefined}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-applicable-fees">
-                  Applicable Fees <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={newDiscount.applicableFees}
-                  onValueChange={(value) => setNewDiscount({ ...newDiscount, applicableFees: value })}
-                  required
-                >
-                  <SelectTrigger id="edit-applicable-fees">
-                    <SelectValue placeholder="Select applicable fees" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Fees">All Fees</SelectItem>
-                    <SelectItem value="Tuition Fee">Tuition Fee</SelectItem>
-                    <SelectItem value="Library Fee">Library Fee</SelectItem>
-                    <SelectItem value="Computer Lab Fee">Computer Lab Fee</SelectItem>
-                    <SelectItem value="Sports Fee">Sports Fee</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-criteria">
-                  Eligibility Criteria <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="edit-criteria"
-                  value={newDiscount.criteria}
-                  onChange={(e) => setNewDiscount({ ...newDiscount, criteria: e.target.value })}
-                  placeholder="e.g., For families with more than one child enrolled"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsEditDiscountOpen(false)
-                  resetDiscountForm()
-                }}
-                type="button"
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Confirmation Modal for Deletion */}
+      <ConfirmationModal 
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={handleDeleteGrading}
+        itemName={selectedGrading?.name}
+        isLoading={isDeleting}
+        title="Delete grading"
+        description="Are you sure you want to delete this grading?"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

@@ -14,7 +14,7 @@ export const registerUser = asyncHandler( async ( req: Request, res: Response) =
 
 export const loginUser = asyncHandler( async ( req: Request, res: Response) => {
     const userLoggedIn = await loginService(req.body);
-    res.cookie('accessToken', userLoggedIn.token, {
+    res.cookie('accessToken', userLoggedIn.chyAuth, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -28,7 +28,8 @@ export const loginUser = asyncHandler( async ( req: Request, res: Response) => {
 })
 
 export const getUserProfile = asyncHandler( async ( req: Request, res: Response) => {
-    const userId = req.user?.userId;
+    const userId = req.user?.userId
+
     const userData = await prisma.user.findUnique({
         where: { id: userId },
     })

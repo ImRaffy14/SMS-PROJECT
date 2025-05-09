@@ -8,6 +8,7 @@ export interface RegisterUser {
     email: string;
     password: string;
     role: string;
+    department: string;
     image: Image;
 }
 
@@ -31,4 +32,16 @@ export interface EditUser {
     name?: string;
     email?: string;
     role?: string;
+}
+
+export interface GradingSystem {
+    id?: string;
+    name: string;
+    description: string;
+    type: string;
+    scale: string;
+    passingGrade: string;
+    isDefault: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }

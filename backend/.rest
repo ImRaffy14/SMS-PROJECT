@@ -31,3 +31,26 @@ Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODBiZDJ
 ##
 GET http://localhost:5000/api/account/users
 Content-Type: application/json
+
+
+### Get Announcement
+##
+GET http://localhost:5000/api/announcement
+Content-Type: application/json
+
+### Create Announcement
+##
+POST http://localhost:5000/api/announcement/createAnnouncement
+Content-Type: application/json
+
+{
+    "title": "TITE",
+    "message": "TANGINANIYO LAHAT",
+    "audience": "All",
+    "status": "Published"
+}
+
+### Get Grading System
+##
+GET http://localhost:5000/api/gradingSystem
+Content-Type: application/json

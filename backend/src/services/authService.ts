@@ -5,9 +5,10 @@ import { UserRole } from '@prisma/client';
 import { AppError } from '../utils/appError';
 import { generateToken } from '../utils/token';
 import { uploadImage } from './imageUploadService';
+import { CipherToken } from '../utils/chyToken';
 
 export const registerService = async (data: RegisterUser, image: any) => {
-    const { name, email, password, role, } = data;
+    const { name, email, password, role, department} = data;
 
     const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -35,6 +36,7 @@ export const registerService = async (data: RegisterUser, image: any) => {
                 email,
                 password: hashedPassword,
                 role: role as UserRole,
+                department,
                 image: {
                     imageUrl: result.url,
                     publicId: result.public_id
@@ -64,7 +66,16 @@ export const loginService = async (data: LoginUser) => {
         throw new AppError('Invalid email or password', 401);
     }
 
-    const token = generateToken({ userId: user.id, email: user.email });
+    const encKey = Buffer.from('a'.repeat(64), 'hex');
 
-    return { token };
+    const token = new CipherToken(encKey.toString('hex'));
+    const payload = {
+        userId: user.id,
+        acl: "read-write",
+        pubKey: Buffer.from('dummy').toString('base64'),
+        issuedAt: Date.now(),
+    }
+    const chyAuth = token.encrypt(payload);
+
+    return { chyAuth };
 }

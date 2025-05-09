@@ -44,6 +44,7 @@ const UserManagement = () => {
     email: "",
     password: "",
     role: "USER",
+    department: "FCMS",
   })
 
   const [editUser, setEditUser] = useState({
@@ -203,6 +204,7 @@ const UserManagement = () => {
       email: "",
       password: "",
       role: "USER",
+      department: "FCMS"
     })
     setEditUser({
       name: "",
@@ -361,6 +363,7 @@ const UserManagement = () => {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Department</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -383,6 +386,9 @@ const UserManagement = () => {
                     <Badge variant={user.role === "ADMIN" ? "default" : user.role === "USER" ? "secondary" : "outline"}>
                       {user.role}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{user.department}</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -569,7 +575,34 @@ const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Department */}
+              <div className="space-y-2">
+                <Label htmlFor="role">
+                  Deparment <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={newUser.department}
+                  onValueChange={(value) => setNewUser({ ...newUser, department: value })}
+                  required
+                >
+                  <SelectTrigger id="department" className="w-[180px]">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FCMS">FCMS</SelectItem>
+                    <SelectItem value="PMS">PMS</SelectItem>
+                    <SelectItem value="LMS">LMS</SelectItem>
+                    <SelectItem value="EMS">EMS</SelectItem>
+                    <SelectItem value="FINMS">FINMS</SelectItem>
+                    <SelectItem value="SMS">SMS</SelectItem>
+                    <SelectItem value="FMS">FMS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
             </div>
+            
 
             <div className="flex justify-end gap-2">
               <Button
@@ -807,6 +840,19 @@ const UserManagement = () => {
                         }
                       >
                         {selectedUser.role}
+                      </Badge>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-500">Deparment</Label>
+                    <p>
+                      <Badge
+                        variant="default"
+                      >
+                        {selectedUser.department}
                       </Badge>
                     </p>
                   </div>

@@ -6,7 +6,6 @@ import {
   Menu,
   EthernetPort,
   Columns3,
-  TabletSmartphone,
   Blocks,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -21,20 +20,16 @@ function Sidebar() {
   const { user } = useAuth();
 
   // Split menu items based on role requirements
-  const baseMenuItems = [
-    { id: "dashboard", path: "/", icon: <BarChart3 size={20} />, label: "Dashboard" },
-    { id: "communication", path: "/communication", icon: <EthernetPort size={20} />, label: "Communication" },
-    { id: "mobileapp", path: "/mobileApp", icon: <TabletSmartphone size={20} />, label: "Mobile Application" },
-    { id: "feeCustomization", path: "/feeCustomization", icon: <Columns3 size={20} />, label: "Fee Customizations" },
-    { id: "smsInteg", path: "/smsInteg", icon: <Blocks size={20} />, label: "SMS Data" },
-  ];
 
   const adminMenuItems = [
+    { id: "dashboard", path: "/", icon: <BarChart3 size={20} />, label: "Dashboard" },
+    { id: "communication", path: "/communication", icon: <EthernetPort size={20} />, label: "Communication" },
+    { id: "emailAnnounce", path: "/smsInteg", icon: <Blocks size={20} />, label: "Email Announcement" },
+    { id: "feeCustomization", path: "/feeCustomization", icon: <Columns3 size={20} />, label: "Few Customizations" },
     { id: "users", path: "/users", icon: <Users size={20} />, label: "Users" },
   ];
 
   const menuItems = [
-    ...baseMenuItems,
     ...(user?.role?.includes("ADMIN") ? adminMenuItems : []),
   ];
 
