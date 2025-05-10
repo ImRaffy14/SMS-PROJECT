@@ -17,7 +17,7 @@ export const loginUser = asyncHandler( async ( req: Request, res: Response) => {
     res.cookie('accessToken', userLoggedIn.chyAuth, {
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000,
     })
     .status(200)
