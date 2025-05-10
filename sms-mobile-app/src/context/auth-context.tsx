@@ -3,20 +3,13 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { setCookie, deleteCookie, getCookie } from 'cookies-next'
-import axios from "axios"
 
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    department: string;
-    image: {
-        imageUrl: string;
-        publicId: string;
-    }
-    createdAt: string;
-    updatedAt: string;
+type User = {
+  id: string
+  name: string
+  email: string
+  role: "student" | "teacher" | "admin" | "parent"
+  avatar?: string
 }
 
 type AuthContextType = {
@@ -57,12 +50,39 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
     
     try {
-      const result = await axios.post('https://sms-backend.imraffydev.com/api/auth/login', {email, password}, {
-        withCredentials: true,
-      })
-
-
-      if (result.data.status === "success") {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const mockUsers = {
+        "student@school.com": {
+          id: "1",
+          name: "John Student",
+          email: "student@school.com",
+          role: "student",
+          avatar: "/avatars/student.jpg"
+        },
+        "teacher@school.com": {
+          id: "2",
+          name: "Jane Teacher",
+          email: "teacher@school.com",
+          role: "teacher",
+          avatar: "/avatars/teacher.jpg"
+        },
+        "parent@school.com": {
+          id: "3",
+          name: "Parent Smith",
+          email: "parent@school.com",
+          role: "parent"
+        }
+      }
+      
+      const loggedInUser = mockUsers[email as keyof typeof mockUsers]
+      
+      if (loggedInUser && password === "password123") {
+        setUser(loggedInUser as User)
+        setCookie('school-app-user', JSON.stringify(loggedInUser), {
+          maxAge: 30 * 24 * 60 * 60,
+          path: '/',
+        })
         router.push('/dashboard')
       } else {
         throw new Error("Invalid email or password")

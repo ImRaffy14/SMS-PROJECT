@@ -35,7 +35,7 @@ Content-Type: application/json
 
 ### Get Announcement
 ##
-GET http://localhost:5000/api/announcement
+GET  https://sms-backend.imraffydev.com/api/announcement
 Content-Type: application/json
 
 ### Create Announcement

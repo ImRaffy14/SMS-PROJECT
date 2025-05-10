@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/auth-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Home, Bell, MessageSquare, BookOpen, CreditCard } from "lucide-react"
+import { Bell, MessageSquare, BookOpen, CreditCard } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 

@@ -1,7 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, User, ChevronLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { BookOpen, Clock, User } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,7 +25,6 @@ const subjects = [
 ]
 
 export default function SubjectsPage() {
-  const router = useRouter()
 
   return (
     <div className="pb-16">

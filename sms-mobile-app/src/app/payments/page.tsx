@@ -1,12 +1,9 @@
 "use client"
 
-import { CreditCard, ChevronLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { MobileNav } from "@/components/shared/mobile-nav"
 import { PageHeader } from "@/components/shared/page-header"
 
@@ -35,7 +32,6 @@ const payments = [
 ]
 
 export default function PaymentsPage() {
-  const router = useRouter()
 
   return (
     <div className="pb-16">

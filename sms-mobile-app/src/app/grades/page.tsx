@@ -1,7 +1,5 @@
 "use client"
 
-import { BookOpen, ChevronLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -33,7 +31,6 @@ const subjects = [
 ]
 
 export default function GradesPage() {
-  const router = useRouter()
 
   return (
     <div className="pb-16">

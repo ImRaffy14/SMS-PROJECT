@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { MessageSquare, Plus, Search, ChevronLeft } from "lucide-react"
+import {  Plus, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { MobileNav } from "@/components/shared/mobile-nav"
 import { PageHeader } from "@/components/shared/page-header"

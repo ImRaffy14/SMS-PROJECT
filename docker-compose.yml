@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    container_name: backend
+    container_name: sms-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -15,7 +15,7 @@ services:
       - imraffy-network
 
   frontend:
-    container_name: frontend
+    container_name: sms-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -23,6 +23,17 @@ services:
       - "3005:3005"
     env_file:
       - ./frontend/.env
+    restart: unless-stopped
+    networks:
+      - imraffy-network
+
+  mobile:
+    container_name: sms-mobile
+    build:
+      context: ./sms-mobile-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  
     restart: unless-stopped
     networks:
       - imraffy-network
