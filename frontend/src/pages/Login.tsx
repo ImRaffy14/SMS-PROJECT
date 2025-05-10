@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
-import { Eye, EyeOff, Shield } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { login } from '@/api/auth';
 import toast from 'react-hot-toast';
 import { AxiosError } from "axios"
