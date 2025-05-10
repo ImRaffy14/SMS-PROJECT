@@ -13,7 +13,7 @@ import emailRoutes from './routes/emailRoutes';
 
 const app = express();
 
-const allowedOrigins = ['http://localhost:3005', 'https://sms.imraffydev.com','http://localhost:3005', 'https://sms-mobile.imraffydev.com'];
+const allowedOrigins = ['http://localhost:3005', 'https://sms.imraffydev.com','http://localhost:3000', 'https://sms-mobile.imraffydev.com'];
 
 app.use(cors({
     origin: allowedOrigins,
