@@ -5,6 +5,7 @@ import { login } from '@/api/auth';
 import toast from 'react-hot-toast';
 import { AxiosError } from "axios"
 import { useNavigate } from 'react-router-dom';
+import Logo from '@/assets/sms-logo.png';
 
 
 export default function AdminLoginPage() {
@@ -37,8 +38,8 @@ export default function AdminLoginPage() {
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4 md:p-8">
             <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg md:p-8">
                 <div className="flex flex-col items-center justify-center space-y-2 mb-6">
-                <div className="rounded-full bg-blue-100 p-3">
-                    <Shield className="h-8 w-8 text-blue-600" />
+                <div className="rounded-full bg-blue-100 ">
+                    <img src={Logo} alt="Logo" className="h-20 w-20 rounded-full" />
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">Login Admin</h1>
                 <div className="flex items-center">
