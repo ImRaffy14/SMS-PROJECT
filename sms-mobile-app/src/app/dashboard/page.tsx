@@ -41,7 +41,7 @@ export default function DashboardPage() {
       <Card className="bg-blue-50 border-blue-100">
         <CardHeader>
           <CardTitle className="text-xl">
-            Welcome back, <span className="text-blue-600">{user.name.split(' ')[0]}</span>!
+            Welcome back, <span className="text-blue-600">{user.name}</span>!
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('en-US', { 

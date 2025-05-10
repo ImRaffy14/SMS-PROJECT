@@ -77,7 +77,6 @@ export default function CommunicationsPage() {
             <Card 
               key={message.id} 
               className="hover:shadow-sm transition-shadow cursor-pointer"
-              onClick={() => router.push(`/communications/${message.id}`)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start gap-3">
