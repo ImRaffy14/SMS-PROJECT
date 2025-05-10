@@ -1,5 +1,3 @@
-"use client"
-
 import {
   Users,
   MessageSquare,
@@ -9,7 +7,6 @@ import {
   Bell,
   GraduationCap,
   FileText,
-  Calendar,
   CheckCircle2,
 } from "lucide-react"
 
@@ -17,7 +14,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useNavigate } from "react-router-dom"
 
 export default function Dashboard() {
@@ -28,19 +24,6 @@ export default function Dashboard() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">School Management Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Calendar className="mr-2 h-4 w-4" />
-            Academic Year 2023-2024
-          </Button>
-          <Button variant="outline" size="sm">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/abstract-admin-interface.png" />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
-        </div>
       </div>
 
       {/* Overview Stats */}
@@ -114,7 +97,7 @@ export default function Dashboard() {
           onClick={() => navigate('/smsInteg')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SMS Integration</CardTitle>
+            <CardTitle className="text-sm font-medium">Email Announcement</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -123,22 +106,10 @@ export default function Dashboard() {
         </Card>
         <Card
           className="hover:bg-accent/50 cursor-pointer transition-colors"
-          onClick={() => navigate('/mobileApp')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mobile App</CardTitle>
-            <Smartphone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">Manage mobile app features and settings</div>
-          </CardContent>
-        </Card>
-        <Card
-          className="hover:bg-accent/50 cursor-pointer transition-colors"
           onClick={() => navigate('/feeCustomization')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Field Customization</CardTitle>
+            <CardTitle className="text-sm font-medium">Few Customization</CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

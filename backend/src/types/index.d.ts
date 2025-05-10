@@ -45,3 +45,11 @@ export interface GradingSystem {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface Email {
+    id?: string;
+    name: string;
+    type: string;
+    message: string;
+    status: string;
+}

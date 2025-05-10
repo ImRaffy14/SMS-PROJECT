@@ -100,7 +100,7 @@ export default function SchoolConfiguration() {
     setIsConfirmationModalOpen(true)
   }
 
-  const { mutate: createGradingSystem, isPending: isCreating } = useCreateGradingSystem()
+  const { mutate: createGradingSystem } = useCreateGradingSystem()
   const handleCreateGrading = () => {
     createGradingSystem(newGrading), {
       onSuccess: () => {

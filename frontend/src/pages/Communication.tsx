@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MessageSquare, Search, Filter, MoreVertical, Edit, Trash2, Eye, Bell, Loader2 } from "lucide-react"
+import {  Search, Filter, MoreVertical, Edit, Trash2, Eye, Bell, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,90 +26,6 @@ import {
 } from "@/hooks/useCommunication"
 import { ConfirmationModal } from "@/components/ConfirmationModal"
 
-
-
-const messages = [
-  {
-    id: 1,
-    sender: "John Smith",
-    senderRole: "Teacher",
-    recipient: "Emma Johnson's Parent",
-    subject: "Regarding Academic Performance",
-    message: "I wanted to discuss Emma's recent performance in Mathematics. She's been doing exceptionally well.",
-    status: "Read",
-    sentAt: "2023-10-25 10:30 AM",
-  },
-  {
-    id: 2,
-    sender: "Michael Brown",
-    senderRole: "Parent",
-    recipient: "Science Teacher",
-    subject: "Science Project Query",
-    message: "I have a question regarding the upcoming science project. Could you please provide more details?",
-    status: "Unread",
-    sentAt: "2023-10-26 09:15 AM",
-  },
-  {
-    id: 3,
-    sender: "Principal Wilson",
-    senderRole: "Admin",
-    recipient: "All Teachers",
-    subject: "Staff Meeting",
-    message: "Reminder: We have a staff meeting scheduled for tomorrow at 3:30 PM in the conference room.",
-    status: "Read",
-    sentAt: "2023-10-24 02:45 PM",
-  },
-  {
-    id: 4,
-    sender: "Olivia Davis",
-    senderRole: "Teacher",
-    recipient: "William Wilson's Parent",
-    subject: "Behavior Concern",
-    message: "I would like to discuss William's behavior in class. Could we schedule a meeting?",
-    status: "Unread",
-    sentAt: "2023-10-26 11:20 AM",
-  },
-  {
-    id: 5,
-    sender: "Admin Office",
-    senderRole: "Admin",
-    recipient: "All Parents",
-    subject: "Fee Structure Update",
-    message: "Please note that there has been a slight revision in the fee structure for the next academic year.",
-    status: "Read",
-    sentAt: "2023-10-23 01:30 PM",
-  },
-  {
-    id: 6,
-    sender: "Sarah Johnson",
-    senderRole: "Teacher",
-    recipient: "David Miller's Parent",
-    subject: "Academic Excellence",
-    message: "I'm pleased to inform you that David has been selected for the Academic Excellence Award this semester.",
-    status: "Read",
-    sentAt: "2023-10-21 03:45 PM",
-  },
-  {
-    id: 7,
-    sender: "Robert Thompson",
-    senderRole: "Parent",
-    recipient: "Class Teacher",
-    subject: "Leave Application",
-    message: "My child will be absent from school for three days due to a family function. Please grant leave.",
-    status: "Unread",
-    sentAt: "2023-10-27 08:30 AM",
-  },
-  {
-    id: 8,
-    sender: "Library Department",
-    senderRole: "Admin",
-    recipient: "All Students",
-    subject: "New Books Available",
-    message: "We have added 50 new books to our library collection. Students are encouraged to check them out.",
-    status: "Read",
-    sentAt: "2023-10-22 11:00 AM",
-  },
-]
 
 export default function CommunicationModule() {
   const [isAddAnnouncementOpen, setIsAddAnnouncementOpen] = useState(false)

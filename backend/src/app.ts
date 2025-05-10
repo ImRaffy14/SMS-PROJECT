@@ -9,6 +9,7 @@ import accountRoutes from './routes/accountRoutes';
 import announcementRoutes from './routes/announcementRoutes';
 import requestLogger from './middlewares/logger';
 import gradingSystemRoutes from './routes/gradingSystemRoutes';
+import emailRoutes from './routes/emailRoutes';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/account', accountRoutes)
 app.use('/api/announcement', announcementRoutes)
 app.use('/api/gradingSystem', gradingSystemRoutes)
+app.use('/api/email', emailRoutes)
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!')

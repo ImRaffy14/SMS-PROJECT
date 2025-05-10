@@ -54,3 +54,8 @@ Content-Type: application/json
 ##
 GET http://localhost:5000/api/gradingSystem
 Content-Type: application/json
+
+### Get Email Template
+##
+GET http://localhost:5000/api/email
+Content-Type: application/json

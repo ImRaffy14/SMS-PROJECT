@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { MessageSquare, Search, Filter, MoreVertical, Edit, Trash2, Eye, Plus } from "lucide-react"
 
@@ -15,149 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
+import { useQuery } from "@tanstack/react-query"
+import { getEmail } from "@/api/email"
+import { Email } from "@/types"
+import FullPageLoader from "@/components/FullpageLoader"
+import {
+  useCreateEmail,
+  useDeleteEmail,
+  useEditEmail,
+} from "@/hooks/useEmail"
+import { ConfirmationModal } from "@/components/ConfirmationModal"
 
-// Mock data
-const smsTemplates = [
-  {
-    id: 1,
-    name: "Attendance Alert",
-    message:
-      "Dear Student, your attendance in {COURSE_NAME} has fallen below the required percentage. Please contact your department coordinator.",
-    type: "Attendance",
-    status: "Active",
-    lastSent: "2023-10-15",
-  },
-  {
-    id: 2,
-    name: "Fee Payment Reminder",
-    message:
-      "Dear Student, this is a reminder that your semester fee payment of {AMOUNT} is due on {DUE_DATE}. Please make the payment to avoid late fees.",
-    type: "Payment",
-    status: "Active",
-    lastSent: "2023-10-10",
-  },
-  {
-    id: 3,
-    name: "Exam Results",
-    message:
-      "Dear Student, your semester exam results are now available. Overall GPA: {GPA}. Please log in to the college portal for detailed results.",
-    type: "Academic",
-    status: "Inactive",
-    lastSent: "2023-09-25",
-  },
-  {
-    id: 4,
-    name: "Campus Event",
-    message:
-      "Dear Student, we invite you to attend {EVENT_NAME} on {EVENT_DATE} at {EVENT_TIME}. Venue: {VENUE}. We look forward to your participation.",
-    type: "Event",
-    status: "Active",
-    lastSent: "2023-10-05",
-  },
-  {
-    id: 5,
-    name: "Holiday Announcement",
-    message:
-      "Dear Student, please note that the college will remain closed on {DATE} due to {REASON}. Classes will resume on {RESUME_DATE}.",
-    type: "Announcement",
-    status: "Active",
-    lastSent: "2023-09-30",
-  },
-  {
-    id: 6,
-    name: "Scholarship Notification",
-    message:
-      "Congratulations! You have been selected for the {SCHOLARSHIP_NAME} scholarship. Please visit the financial aid office with your documents.",
-    type: "Financial",
-    status: "Active",
-    lastSent: "2023-10-12",
-  },
-  {
-    id: 7,
-    name: "Library Book Due",
-    message:
-      "Dear Student, this is a reminder that the book '{BOOK_TITLE}' is due for return on {DUE_DATE}. Please return it to avoid late fees.",
-    type: "Library",
-    status: "Active",
-    lastSent: "2023-10-18",
-  },
-  {
-    id: 8,
-    name: "Internship Opportunity",
-    message:
-      "New internship opportunity available with {COMPANY_NAME} for {DEPARTMENT} students. Apply before {DEADLINE}. Visit career services for details.",
-    type: "Career",
-    status: "Active",
-    lastSent: "2023-10-20",
-  },
-]
-
-const smsLogs = [
-  {
-    id: 1,
-    recipient: "John Smith",
-    phone: "+1234567890",
-    template: "Attendance Alert",
-    status: "Delivered",
-    sentAt: "2023-10-15 08:30 AM",
-  },
-  {
-    id: 2,
-    recipient: "Emma Johnson",
-    phone: "+1987654321",
-    template: "Fee Payment Reminder",
-    status: "Delivered",
-    sentAt: "2023-10-10 09:15 AM",
-  },
-  {
-    id: 3,
-    recipient: "Michael Brown",
-    phone: "+1122334455",
-    template: "Exam Results",
-    status: "Failed",
-    sentAt: "2023-09-25 02:45 PM",
-  },
-  {
-    id: 4,
-    recipient: "All Students",
-    phone: "Multiple",
-    template: "Campus Event",
-    status: "Delivered",
-    sentAt: "2023-10-05 10:00 AM",
-  },
-  {
-    id: 5,
-    recipient: "All Students",
-    phone: "Multiple",
-    template: "Holiday Announcement",
-    status: "Delivered",
-    sentAt: "2023-09-30 03:30 PM",
-  },
-  {
-    id: 6,
-    recipient: "Sarah Williams",
-    phone: "+1555666777",
-    template: "Scholarship Notification",
-    status: "Delivered",
-    sentAt: "2023-10-12 11:20 AM",
-  },
-  {
-    id: 7,
-    recipient: "David Miller",
-    phone: "+1888999000",
-    template: "Library Book Due",
-    status: "Delivered",
-    sentAt: "2023-10-18 01:45 PM",
-  },
-  {
-    id: 8,
-    recipient: "Computer Science Students",
-    phone: "Multiple",
-    template: "Internship Opportunity",
-    status: "Delivered",
-    sentAt: "2023-10-20 09:30 AM",
-  },
-]
 
 export default function SMSIntegration() {
   const [isAddTemplateOpen, setIsAddTemplateOpen] = useState(false)
@@ -168,10 +34,10 @@ export default function SMSIntegration() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState("All")
   const [activeTab, setActiveTab] = useState("templates")
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false)
 
   // Pagination state
   const [currentTemplatePage, setCurrentTemplatePage] = useState(1)
-  const [currentLogPage, setCurrentLogPage] = useState(1)
   const itemsPerPage = 5
 
   const [newTemplate, setNewTemplate] = useState({
@@ -179,6 +45,13 @@ export default function SMSIntegration() {
     message: "",
     type: "Attendance",
     status: "Active",
+  })
+
+  const { data: smsTemplates, isLoading, refetch } = useQuery<Email[], Error>({
+    queryKey: ["emails"],
+    queryFn: getEmail,
+    staleTime: 60000,
+    gcTime: 300000,
   })
 
   const templateTypes = [
@@ -193,25 +66,19 @@ export default function SMSIntegration() {
     "Career",
   ]
 
-  const filteredTemplates = smsTemplates.filter((template) => {
+  const filteredTemplates: Email[] = smsTemplates?.filter((template) => {
     const matchesSearch =
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.message.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = selectedType === "All" || template.type === selectedType
     return matchesSearch && matchesType
-  })
+  }) ?? []
 
   // Pagination logic for templates
   const indexOfLastTemplate = currentTemplatePage * itemsPerPage
   const indexOfFirstTemplate = indexOfLastTemplate - itemsPerPage
   const currentTemplates = filteredTemplates.slice(indexOfFirstTemplate, indexOfLastTemplate)
   const totalTemplatePages = Math.ceil(filteredTemplates.length / itemsPerPage)
-
-  // Pagination logic for logs
-  const indexOfLastLog = currentLogPage * itemsPerPage
-  const indexOfFirstLog = indexOfLastLog - itemsPerPage
-  const currentLogs = smsLogs.slice(indexOfFirstLog, indexOfLastLog)
-  const totalLogPages = Math.ceil(smsLogs.length / itemsPerPage)
 
   const resetForm = () => {
     setNewTemplate({
@@ -238,15 +105,75 @@ export default function SMSIntegration() {
     setIsEditTemplateOpen(true)
   }
 
+  const { mutate: createEmail } = useCreateEmail()
+  const handleAddAnnouncement = async () => {
+    createEmail(newTemplate), {
+      onSuccess: () => {
+        setIsAddTemplateOpen(false)
+        resetForm()
+        refetch()
+      },
+      onError: (error: Error) => {
+        console.error("Error creating email template:", error)
+      },
+    }
+  }
+
+  const { mutate: editEmail } = useEditEmail()
+  const handleEditTemplate = async () => {
+    if (!selectedTemplate) return
+    editEmail(
+      { data: newTemplate, id: selectedTemplate.id },
+      {
+        onSuccess: () => {
+          refetch()
+          setIsEditTemplateOpen(false)
+          setIsConfirmationModalOpen(false)
+          setSelectedTemplate(null)
+          resetForm()
+        },
+        onError: (error: Error) => {
+          console.error("Error editing email template:", error)
+        },
+      }
+    )
+  }
+
+  
+  const openDeleteModal = (template: any) => {
+    setSelectedTemplate(template)
+    setIsConfirmationModalOpen(true)
+  }
+
+  const { mutate: deleteEmail, isPending: isDeleting } = useDeleteEmail()
+
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return
+    deleteEmail(selectedTemplate.id, {
+      onSuccess: () => {
+        setIsConfirmationModalOpen(false)
+        refetch()
+      },
+      onError: (error: Error) => {
+        console.error("Error deleting email template:", error)
+        setIsConfirmationModalOpen(false)
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <FullPageLoader message="Loading email templates..." showLogo={true} />
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">College SMS Integration</h2>
+        <h2 className="text-2xl font-bold">College Email Integration</h2>
         <div className="flex gap-2">
           <Button className="gap-2" onClick={() => setIsSendSMSOpen(true)}>
             <MessageSquare size={16} />
-            Send SMS
+            Send Email
           </Button>
           <Button className="gap-2" onClick={() => setIsAddTemplateOpen(true)}>
             <Plus size={16} />
@@ -257,9 +184,8 @@ export default function SMSIntegration() {
 
       {/* Tabs */}
       <Tabs defaultValue="templates" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="templates">SMS Templates</TabsTrigger>
-          <TabsTrigger value="logs">SMS Logs</TabsTrigger>
+        <TabsList className="w-full">
+          <TabsTrigger value="templates">Email Templates</TabsTrigger>
         </TabsList>
 
         {/* Templates Tab */}
@@ -268,7 +194,7 @@ export default function SMSIntegration() {
           <Card>
             <CardHeader>
               <CardTitle>Filters</CardTitle>
-              <CardDescription>Filter SMS templates</CardDescription>
+              <CardDescription>Filter Email templates</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -339,7 +265,6 @@ export default function SMSIntegration() {
                     <TableHead>Template Name</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Last Sent</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -357,7 +282,6 @@ export default function SMSIntegration() {
                           {template.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{template.lastSent}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -374,7 +298,7 @@ export default function SMSIntegration() {
                               <Edit size={16} />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-red-600">
+                            <DropdownMenuItem className="gap-2 text-red-600" onClick={() => openDeleteModal(template)}>
                               <Trash2 size={16} />
                               Delete
                             </DropdownMenuItem>
@@ -417,80 +341,6 @@ export default function SMSIntegration() {
           </Card>
         </TabsContent>
 
-        {/* Logs Tab */}
-        <TabsContent value="logs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>SMS Logs</CardTitle>
-                  <CardDescription>History of sent SMS messages</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Phone Number</TableHead>
-                    <TableHead>Template</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <div className="font-medium">{log.recipient}</div>
-                      </TableCell>
-                      <TableCell>{log.phone}</TableCell>
-                      <TableCell>{log.template}</TableCell>
-                      <TableCell>
-                        <Badge variant={log.status === "Delivered" ? "default" : "destructive"}>{log.status}</Badge>
-                      </TableCell>
-                      <TableCell>{log.sentAt}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon">
-                          <Eye size={16} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {Math.min((currentLogPage - 1) * itemsPerPage + 1, smsLogs.length)} to{" "}
-                {Math.min(currentLogPage * itemsPerPage, smsLogs.length)} of {smsLogs.length} logs
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentLogPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentLogPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="text-sm">
-                  Page {currentLogPage} of {totalLogPages || 1}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentLogPage((prev) => Math.min(prev + 1, totalLogPages))}
-                  disabled={currentLogPage === totalLogPages || totalLogPages === 0}
-                >
-                  Next
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Add Template Modal */}
@@ -498,22 +348,21 @@ export default function SMSIntegration() {
         open={isAddTemplateOpen}
         onOpenChange={(open) => {
           if (!open) {
-            resetForm()
+            setSelectedTemplate(null)
           }
           setIsAddTemplateOpen(open)
         }}
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Add SMS Template</DialogTitle>
-            <DialogDescription>Create a new SMS template for automated notifications.</DialogDescription>
+            <DialogTitle>Add Email Template</DialogTitle>
+            <DialogDescription>Create a new Email template for automated notifications.</DialogDescription>
           </DialogHeader>
 
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setIsAddTemplateOpen(false)
-              resetForm()
+              handleAddAnnouncement()
             }}
           >
             <div className="grid gap-4 py-4">
@@ -614,7 +463,7 @@ export default function SMSIntegration() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Template Details</DialogTitle>
-            <DialogDescription>View SMS template information.</DialogDescription>
+            <DialogDescription>View Email template information.</DialogDescription>
           </DialogHeader>
 
           {selectedTemplate && (
@@ -674,7 +523,6 @@ export default function SMSIntegration() {
         onOpenChange={(open) => {
           if (!open) {
             setSelectedTemplate(null)
-            resetForm()
           }
           setIsEditTemplateOpen(open)
         }}
@@ -688,8 +536,7 @@ export default function SMSIntegration() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setIsEditTemplateOpen(false)
-              resetForm()
+              handleEditTemplate()
             }}
           >
             <div className="grid gap-4 py-4">
@@ -786,7 +633,7 @@ export default function SMSIntegration() {
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Send SMS</DialogTitle>
+            <DialogTitle>Send Email</DialogTitle>
             <DialogDescription>Send SMS notifications to students or faculty.</DialogDescription>
           </DialogHeader>
 
@@ -825,7 +672,7 @@ export default function SMSIntegration() {
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {smsTemplates.map((template) => (
+                    {smsTemplates && smsTemplates.map((template) => (
                       <SelectItem key={template.id} value={template.id.toString()}>
                         {template.name}
                       </SelectItem>
@@ -863,11 +710,24 @@ export default function SMSIntegration() {
               <Button variant="outline" onClick={() => setIsSendSMSOpen(false)} type="button">
                 Cancel
               </Button>
-              <Button type="submit">Send SMS</Button>
+              <Button type="submit">Send Email</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+        <ConfirmationModal 
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={handleDeleteTemplate}
+        itemName={selectedTemplate?.name}
+        isLoading={isDeleting}
+        title="Delete Template"
+        description="Are you sure you want to delete this Template?"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
     </div>
   )
 }
