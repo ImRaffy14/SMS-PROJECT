@@ -7,6 +7,7 @@ import WithSocket from "./components/WithSocket";
 import FullPageLoader from "./components/FullpageLoader";
 import CommunicationModule from "./pages/Communication";
 import FeeCustomization from "./pages/FeeCustomization";
+import AccountRequestComponent from "./pages/accountRequest";
 import MobileApplication from "./pages/MobileApplication";
 import SMSIntegration from "./pages/SmsIntegration";
 import { Toaster } from "react-hot-toast";
@@ -100,6 +101,11 @@ function App() {
         { 
           path: "smsInteg", 
           element: <SMSIntegration />,
+          roles: ["ADMIN"] 
+        },
+                { 
+          path: "accountRequest", 
+          element: <AccountRequestComponent />,
           roles: ["ADMIN"] 
         },
       ],

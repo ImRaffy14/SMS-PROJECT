@@ -27,6 +27,7 @@ function Sidebar() {
     { id: "emailAnnounce", path: "/smsInteg", icon: <Blocks size={20} />, label: "Email Announcement" },
     { id: "feeCustomization", path: "/feeCustomization", icon: <Columns3 size={20} />, label: "Few Customizations" },
     { id: "users", path: "/users", icon: <Users size={20} />, label: "Users" },
+    { id: "accountRequest", path: "/accountRequest", icon: <Users size={20} />, label: "Account Request" },
   ];
 
   const menuItems = [
